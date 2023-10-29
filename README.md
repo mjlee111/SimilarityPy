@@ -18,3 +18,9 @@ $ cd SimilarityPy
 $ mkdir files # Put your test files here
 $ python3 pdf.py
 ```
+### PyQt5 GUI Pdf Test
+File select available with GUI
+```python
+$ cd SimilarityPy
+$ python3 qt.py
+```
