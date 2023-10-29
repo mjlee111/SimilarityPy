@@ -40,7 +40,11 @@ similarities.sort(key=lambda x: x[2], reverse=True)
 
 # pprint로 출력
 import pprint
+RED = "\033[91m"
+GREEN = "\033[92m"
+RESET = "\033[0m"
 
-pprint.pprint(["이름1          이름2          유사도"],indent=2, width=35)
+
+pprint.pprint(["이름1        이름2        유사도"],indent=2, width=35)
 for pair in similarities:
     pprint.pprint(pair, indent=2, width=60)
