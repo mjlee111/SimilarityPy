@@ -1,1 +1,1 @@
-# 유사도
+# Similarity Tester with Python
