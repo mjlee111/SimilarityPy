@@ -24,7 +24,6 @@ def get_similarity(embeddings, method="cosine"):
     elif method == "euclidean":
         return pairwise_distances(embeddings, metric='euclidean')
     elif method == "jaccard":
-        # Calculate Jaccard similarity properly
         num_docs = embeddings.shape[0]
         jaccard_similarity = np.zeros((num_docs, num_docs))
         for i in range(num_docs):
