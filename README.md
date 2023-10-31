@@ -1,11 +1,13 @@
 # Similarity Tester Python
-## How To Use
-### Intallation
+
+## Installation
 ```python
 $ git clone https://github.com/mjlee111/SimilarityPy.git
 $ cd SimilarityPy
 $ pip install -r requirements.txt
 ```
+
+## How To Use
 ### Txt file Test
 ```python
 $ cd SimilarityPy
