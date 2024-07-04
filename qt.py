@@ -1,29 +1,31 @@
 import os
-import fitz
+import fitz  # PyMuPDF
+import docx  # python-docx
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QTextEdit
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtCore import Qt
 
-class PDFSimilarityApp(QWidget):
+class FileSimilarityApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('PDF File Similarity Tester')
+        self.setWindowTitle('File Similarity Tester')
         self.setGeometry(100, 100, 800, 600)
 
-        icon_path = os.path.join(os.path.dirname(__file__), 'icon', 'pdf.png')
-        self.setWindowIcon(QIcon(icon_path))
+        icon_path = os.path.join(os.path.dirname(__file__), 'icon', 'file.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            print("Icon file not found")
 
         self.text_edit = QTextEdit(self)
         self.text_edit.setReadOnly(True)
 
-        self.load_button = QPushButton('Load PDF Files', self)
-        self.load_button.clicked.connect(self.loadPDFFiles)
+        self.load_button = QPushButton('Load Files', self)
+        self.load_button.clicked.connect(self.loadFiles)
 
         self.reset_button = QPushButton('Reset', self)
         self.reset_button.clicked.connect(self.resetUI)
@@ -34,18 +36,20 @@ class PDFSimilarityApp(QWidget):
         self.layout.addWidget(self.text_edit)
         self.setLayout(self.layout)
 
-    def loadPDFFiles(self):
+    def loadFiles(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
         options |= QFileDialog.ExistingFiles
 
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter("PDF Files (*.pdf)")
-        files, _ = file_dialog.getOpenFileNames(self, 'Select PDF Files', '', "PDF Files (*.pdf)", options=options)
+        file_dialog.setNameFilter("Text Files (*.pdf *.txt *.docx)")
+        files, _ = file_dialog.getOpenFileNames(self, 'Select Files', '', "Text Files (*.pdf *.txt *.docx)", options=options)
+
+        print("Selected files:", files)  # Debugging line
 
         if files:
-            self.processPDFFiles(files)
+            self.processFiles(files)
 
     def resetUI(self):
         self.text_edit.clear()
@@ -57,8 +61,41 @@ class PDFSimilarityApp(QWidget):
             text += page.get_text()
         return text
 
-    def processPDFFiles(self, pdf_files):
-        texts = [self.extract_text_from_pdf(pdf_file) for pdf_file in pdf_files]
+    def extract_text_from_txt(self, txt_path):
+        try:
+            with open(txt_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+            return text
+        except Exception as e:
+            print(f"Error reading {txt_path}: {e}")
+            return ""
+
+    def extract_text_from_docx(self, docx_path):
+        try:
+            doc = docx.Document(docx_path)
+            text = ""
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+            return text
+        except Exception as e:
+            print(f"Error reading {docx_path}: {e}")
+            return ""
+
+    def processFiles(self, files):
+        texts = []
+        for file in files:
+            if file.lower().endswith('.pdf'):
+                texts.append(self.extract_text_from_pdf(file))
+            elif file.lower().endswith('.txt'):
+                texts.append(self.extract_text_from_txt(file))
+            elif file.lower().endswith('.docx'):
+                texts.append(self.extract_text_from_docx(file))
+            else:
+                print(f"Unsupported file type: {file}")
+
+        if not texts:
+            print("No text extracted from files.")
+            return
 
         tfidf_vectorizer = TfidfVectorizer()
         tfidf_matrix = tfidf_vectorizer.fit_transform(texts)
@@ -66,34 +103,32 @@ class PDFSimilarityApp(QWidget):
         cosine_similarities = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
         similarities = []
-        for i in range(len(pdf_files)):
-            for j in range(i + 1, len(pdf_files)):
+        for i in range(len(files)):
+            for j in range(i + 1, len(files)):
                 similarity = cosine_similarities[i][j] * 100
                 similarity = round(similarity, 4)
-                pair = (os.path.basename(pdf_files[i]), os.path.basename(pdf_files[j]), similarity)
+                pair = (os.path.basename(files[i]), os.path.basename(files[j]), similarity)
                 similarities.append(pair)
 
         similarities.sort(key=lambda x: x[2], reverse=True)
 
         custom_dim_gray = QColor(20, 20, 20)
+        custom_red = QColor(255, 0, 0)
 
-        custom_red = QColor(255, 255, 0)
-
-        result_text = "<span style='color: red;'>PDF Similarity Results:</span><br>"
+        result_text = "<span style='color: red;'>File Similarity Results:</span><br>"
         for pair in similarities:
             similarity_percent = f"{pair[2]}%"
             result_text += f"{pair[0]} - {pair[1]} : Similarity " \
-                f"<span style='color: {custom_red.name()}; backg0nd-color: {custom_dim_gray.name()};'>{similarity_percent}</span><br>"
+                           f"<span style='color: {custom_red.name()}; background-color: {custom_dim_gray.name()};'>{similarity_percent}</span><br>"
 
         self.text_edit.setHtml(result_text)
 
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    window = PDFSimilarityApp()
+    window = FileSimilarityApp()
 
     window.setStyleSheet("background-color: rgb(105, 105, 105); color: white;")
-
     window.text_edit.setStyleSheet("color: white;")
 
     window.show()
