@@ -41,15 +41,17 @@ class FileSimilarityApp(QWidget):
         options |= QFileDialog.ReadOnly
         options |= QFileDialog.ExistingFiles
 
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter("Text Files (*.pdf *.txt *.docx)")
-        files, _ = file_dialog.getOpenFileNames(self, 'Select Files', '', "Text Files (*.pdf *.txt *.docx)", options=options)
+        files, _ = QFileDialog.getOpenFileNames(self, 'Select Files', '', 
+                                            "All Files (*)", 
+                                            options=options)
 
-        print("Selected files:", files)  # Debugging line
+        print("Selected files:", files)  
 
         if files:
             self.processFiles(files)
+
+
+
 
     def resetUI(self):
         self.text_edit.clear()
